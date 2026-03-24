@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-surface: var(--app-surface);
+  --color-surface-container-lowest: var(--app-surface-container-lowest);
+  --color-surface-container-low: var(--app-surface-container-low);
+  --color-surface-container: var(--app-surface-container);
+  --color-surface-container-high: var(--app-surface-container-high);
+  --color-surface-container-highest: var(--app-surface-container-highest);
+  
+  --color-primary: var(--app-primary);
+  --color-primary-container: var(--app-primary-container);
+  --color-primary-fixed-dim: var(--app-primary-fixed-dim);
+  
+  --color-on-primary: var(--app-on-primary);
+  --color-on-primary-container: var(--app-on-primary-container);
+  
+  --color-secondary: var(--app-secondary);
+  
+  --color-on-surface: var(--app-on-surface);
+  --color-on-surface-variant: var(--app-on-surface-variant);
+  
+  --color-tertiary: var(--app-tertiary);
+  
+  --color-outline: var(--app-outline);
+  --color-outline-variant: var(--app-outline-variant);
+
+  --font-headline: 'Newsreader', serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+:root {
+  /* Dark Theme (Default) */
+  --app-surface: #111317;
+  --app-surface-container-lowest: #0c0e12;
+  --app-surface-container-low: #1a1c20;
+  --app-surface-container: #1e2024;
+  --app-surface-container-high: #282a2e;
+  --app-surface-container-highest: #333539;
+  
+  --app-primary: #f2ca50;
+  --app-primary-container: #d4af37;
+  --app-primary-fixed-dim: #e9c349;
+  
+  --app-on-primary: #3c2f00;
+  --app-on-primary-container: #554300;
+  
+  --app-secondary: #e1c28e;
+  
+  --app-on-surface: #e2e2e8;
+  --app-on-surface-variant: #d0c5af;
+  
+  --app-tertiary: #cecece;
+  
+  --app-outline: #99907c;
+  --app-outline-variant: #4d4635;
+}
+
+.light {
+  /* Light Theme */
+  --app-surface: #f8f9fa;
+  --app-surface-container-lowest: #ffffff;
+  --app-surface-container-low: #f1f3f5;
+  --app-surface-container: #e9ecef;
+  --app-surface-container-high: #dee2e6;
+  --app-surface-container-highest: #ced4da;
+  
+  --app-primary: #d4af37; 
+  --app-primary-container: #f2ca50;
+  --app-primary-fixed-dim: #c5a028;
+  
+  --app-on-primary: #ffffff;
+  --app-on-primary-container: #3c2f00;
+  
+  --app-secondary: #b8975e;
+  
+  --app-on-surface: #212529;
+  --app-on-surface-variant: #495057;
+  
+  --app-tertiary: #6c757d;
+  
+  --app-outline: #adb5bd;
+  --app-outline-variant: #e9ecef;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.editorial-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+}
+
+.glass-panel {
+  backdrop-filter: blur(20px);
+  background: rgba(26, 28, 32, 0.8);
+}
+
+.light .glass-panel {
+  background: rgba(248, 249, 250, 0.8);
+}
+
+.glass-card {
+  background: rgba(40, 42, 46, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(242, 202, 80, 0.1);
+}
+
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
