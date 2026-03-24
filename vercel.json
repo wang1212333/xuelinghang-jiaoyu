@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "root": "zip",
-  "buildCommand": "npm install && npm run build",
-  "installCommand": "npm install",
-  "outputDirectory": "dist",
-  "routes": [
-    { "src": "/(.*)", "dest": "/$1" }
+  "builds": [
+    {
+      "src": "zip/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
   ]
 }
