@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "installCommand": "cd zip && npm install",
+  "buildCommand": "cd zip && npm run build",
+  "outputDirectory": "zip/dist"
+}
