@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
-import api from '../services/api';
+import { supabase } from '../lib/supabase';
 
 interface AuthProps {
-  onLogin: (user: any) => void;
+  onLogin: (email: string, password: string) => Promise<void>;
   onSwitchToRegister: () => void;
 }
 
@@ -26,13 +26,7 @@ export function Login({ onLogin, onSwitchToRegister }: AuthProps) {
     setIsLoading(true);
 
     try {
-      const result = await api.auth.login(email, password);
-
-      if (result && result.success) {
-        onLogin(result.user);
-      } else {
-        setError(result?.error || '登录失败，请检查邮箱和密码');
-      }
+      await onLogin(email, password);
     } catch (err: any) {
       setError(err.message || '登录失败，请稍后重试');
     } finally {
@@ -123,7 +117,7 @@ export function Login({ onLogin, onSwitchToRegister }: AuthProps) {
 }
 
 interface RegisterProps {
-  onRegister: (user: any) => void;
+  onRegister: (email: string, password: string) => Promise<void>;
   onSwitchToLogin: () => void;
 }
 
@@ -166,23 +160,32 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
     setIsLoading(true);
 
     try {
-      const result = await api.auth.register({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        name: formData.name,
-        phone: formData.phone,
-        wechat: formData.wechat
+        options: {
+          data: {
+            name: formData.name,
+            phone: formData.phone,
+            wechat: formData.wechat
+          }
+        }
       });
 
-      if (result && result.success) {
-        const loginResult = await api.auth.login(formData.email, formData.password);
-        if (loginResult && loginResult.success) {
-          onRegister(loginResult.user);
-        } else {
-          onSwitchToLogin();
-        }
-      } else {
-        setError(result?.error || '注册失败，请稍后重试');
+      if (signUpError) {
+        setError(signUpError.message || '注册失败，请稍后重试');
+        return;
+      }
+
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          user_id: data.user.id,
+          name: formData.name,
+          phone: formData.phone || '',
+          wechat: formData.wechat || '',
+          role: 'user'
+        });
+        await onRegister(formData.email, formData.password);
       }
     } catch (err: any) {
       setError(err.message || '注册失败，请稍后重试');

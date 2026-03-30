@@ -8,6 +8,7 @@ import { Messages } from './screens/Messages';
 import { Login, Register } from './screens/Auth';
 import { BottomNav, TopNav } from './components/Navigation';
 import api, { DEMO_USER_ID, getAuthToken, getStoredUser, clearAuth } from './services/api';
+import { supabase } from './lib/supabase';
 
 export interface Message {
   id: string;
@@ -74,26 +75,40 @@ export default function App() {
 
   useEffect(() => {
     async function checkAuth() {
-      const token = getAuthToken();
-      if (token) {
-        const user = await api.auth.getCurrentUser();
-        if (user) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
           setIsAuthenticated(true);
-          setUserProfile({
-            name: user.name || '用户',
-            role: user.role_label || user.role || '学领航员',
-            gender: user.gender || '',
-            grade: user.grade || '',
-            phone: user.phone || '',
-            email: user.email || '',
-            wechat: user.wechat || '',
-            city: user.city || '',
-            district: user.district || '',
-            address: user.address || '',
-            avatarUrl: user.avatar_url || user.avatarUrl || DEFAULT_PROFILE.avatarUrl
-          });
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (profileData) {
+            setUserProfile({
+              name: profileData.name || '用户',
+              role: profileData.role_label || profileData.role || '学领航员',
+              gender: profileData.gender || '',
+              grade: profileData.grade || '',
+              phone: profileData.phone || '',
+              email: profileData.email || session.user.email || '',
+              wechat: profileData.wechat || '',
+              city: profileData.city || '',
+              district: profileData.district || '',
+              address: profileData.address || '',
+              avatarUrl: profileData.avatar_url || profileData.avatarUrl || DEFAULT_PROFILE.avatarUrl
+            });
+          } else {
+            setUserProfile({
+              ...DEFAULT_PROFILE,
+              email: session.user.email || ''
+            });
+          }
           return true;
         }
+      } catch (error) {
+        console.warn('Supabase auth check failed:', error);
       }
       return false;
     }
@@ -292,28 +307,56 @@ export default function App() {
 
   const unreadCount = messages.filter(m => !m.isRead).length;
 
-  const handleLogin = useCallback((user: any) => {
-    setIsAuthenticated(true);
-    setUserProfile({
-      name: user.name || '用户',
-      role: user.role_label || user.role || '学领航员',
-      gender: user.gender || '',
-      grade: user.grade || '',
-      phone: user.phone || '',
-      email: user.email || '',
-      wechat: user.wechat || '',
-      city: user.city || '',
-      district: user.district || '',
-      address: user.address || '',
-      avatarUrl: user.avatar_url || user.avatarUrl || DEFAULT_PROFILE.avatarUrl
+  const handleLogin = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      setIsAuthenticated(true);
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (profileData) {
+        setUserProfile({
+          name: profileData.name || '用户',
+          role: profileData.role_label || profileData.role || '学领航员',
+          gender: profileData.gender || '',
+          grade: profileData.grade || '',
+          phone: profileData.phone || '',
+          email: profileData.email || data.user.email || '',
+          wechat: profileData.wechat || '',
+          city: profileData.city || '',
+          district: profileData.district || '',
+          address: profileData.address || '',
+          avatarUrl: profileData.avatar_url || profileData.avatarUrl || DEFAULT_PROFILE.avatarUrl
+        });
+      } else {
+        setUserProfile({
+          ...DEFAULT_PROFILE,
+          email: data.user.email || ''
+        });
+      }
+    }
   }, []);
 
-  const handleLogout = useCallback(() => {
-    api.auth.logout();
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setCurrentTab('home');
   }, []);
+
+  const handleRegister = useCallback(async (email: string, password: string) => {
+    await handleLogin(email, password);
+  }, [handleLogin]);
 
   const renderScreen = () => {
     if (isLoading) {
@@ -328,7 +371,7 @@ export default function App() {
       if (authMode === 'register') {
         return (
           <Register
-            onRegister={handleLogin}
+            onRegister={handleRegister}
             onSwitchToLogin={() => setAuthMode('login')}
           />
         );

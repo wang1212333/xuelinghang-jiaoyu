@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Users, FileText, CheckSquare, LogOut, Menu, X } from 'lucide-react';
-import { adminApi, getAdminRole, clearAdminToken } from './services/api';
+import { supabase } from './lib/supabase';
 import LoginPage from './pages/LoginPage';
 import AdminRegisterPage from './pages/AdminRegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -8,6 +8,9 @@ import UsersPage from './pages/UsersPage';
 import RequirementsPage from './pages/RequirementsPage';
 
 type Page = 'dashboard' | 'users' | 'requirements';
+
+const ADMIN_TOKEN_KEY = 'admin_token';
+const ADMIN_EMAIL_KEY = 'admin_email';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,27 +20,59 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const role = getAdminRole();
-      console.log('Initial role check:', role);
-      if (role === 'admin') {
-        setIsAuthenticated(true);
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          localStorage.setItem(ADMIN_TOKEN_KEY, session.access_token);
+          localStorage.setItem(ADMIN_EMAIL_KEY, session.user.email || '');
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setError('初始化失败：' + (error as Error).message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      setError('初始化失败：' + (error as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        localStorage.setItem(ADMIN_TOKEN_KEY, session.access_token);
+        localStorage.setItem(ADMIN_EMAIL_KEY, session.user.email || '');
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        localStorage.removeItem(ADMIN_EMAIL_KEY);
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogin = useCallback(async (email: string, password: string) => {
-    await adminApi.login(email, password);
-    setIsAuthenticated(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      localStorage.setItem(ADMIN_TOKEN_KEY, data.session?.access_token || '');
+      localStorage.setItem(ADMIN_EMAIL_KEY, data.user.email || '');
+      setIsAuthenticated(true);
+    }
   }, []);
 
-  const handleLogout = useCallback(() => {
-    clearAdminToken();
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_EMAIL_KEY);
     setIsAuthenticated(false);
     setCurrentPage('dashboard');
   }, []);
