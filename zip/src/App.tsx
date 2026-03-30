@@ -320,6 +320,7 @@ export default function App() {
 
     if (data.user) {
       setIsAuthenticated(true);
+      setIsLoading(false);
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
