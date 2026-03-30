@@ -74,9 +74,13 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
+    console.log('[App] Initializing, isLoading:', true);
+
     async function checkAuth() {
+      console.log('[App] Checking auth...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('[App] Session:', session);
         if (session?.user) {
           setIsAuthenticated(true);
           const { data: profileData } = await supabase
@@ -115,8 +119,10 @@ export default function App() {
 
     async function loadInitialData() {
       const isAuth = await checkAuth();
+      console.log('[App] Auth check result:', isAuth);
       if (isAuth) {
         setIsLoading(false);
+        console.log('[App] Setting isLoading to false, returning');
         return;
       }
 
@@ -179,8 +185,9 @@ export default function App() {
           setEnrolledCourses(enrollmentsData.map((e: any) => e.course_id));
         }
       } catch (error) {
-        console.warn('Failed to load data from API:', error);
+        console.warn('[App] Failed to load data from API:', error);
       } finally {
+        console.log('[App] Finally: Setting isLoading to false');
         setIsLoading(false);
       }
     }
@@ -358,6 +365,7 @@ export default function App() {
   }, [handleLogin]);
 
   const renderScreen = () => {
+    console.log('[App] renderScreen called, isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-64">
