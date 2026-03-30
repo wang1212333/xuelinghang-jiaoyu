@@ -79,7 +79,6 @@ export default function App() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setIsAuthenticated(true);
-          setIsLoading(false);
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
@@ -115,10 +114,13 @@ export default function App() {
     }
 
     async function loadInitialData() {
-      const isAuth = await checkAuth();
-      if (isAuth) return;
-
       try {
+        const isAuth = await checkAuth();
+        if (isAuth) {
+          setIsLoading(false);
+          return;
+        }
+
         const profileData = await api.user.get(DEMO_USER_ID);
         if (profileData) {
           setUserProfile({
