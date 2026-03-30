@@ -26,8 +26,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // 允许同源请求和列表中的来源
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    // 允许所有来源（生产环境需要设置 FRONTEND_URL）
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production' || origin?.includes('vercel.app') || origin?.includes('netlify.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
