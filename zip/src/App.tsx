@@ -76,12 +76,7 @@ export default function App() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth timeout')), 5000)
-        );
-        const sessionPromise = supabase.auth.getSession();
-        const result = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any } };
-        const { data: { session } } = result;
+        const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setIsAuthenticated(true);
           const { data: profileData } = await supabase
@@ -119,31 +114,36 @@ export default function App() {
     }
 
     async function loadInitialData() {
-      try {
-        const isAuth = await checkAuth();
-        if (isAuth) {
-          setIsLoading(false);
-          return;
-        }
+      const isAuth = await checkAuth();
+      if (isAuth) {
+        setIsLoading(false);
+        return;
+      }
 
-        const profileData = await api.user.get(DEMO_USER_ID);
+      try {
+        const [profileData, messagesData, requirementsData, enrollmentsData] = await Promise.all([
+          api.user.get(DEMO_USER_ID).catch(() => null),
+          api.message.getAll(DEMO_USER_ID).catch(() => []),
+          api.requirement.getAll(DEMO_USER_ID).catch(() => []),
+          api.enrollment.getAll(DEMO_USER_ID).catch(() => [])
+        ]);
+
         if (profileData) {
           setUserProfile({
-            name: profileData.name,
+            name: profileData.name || '用户',
             role: profileData.role_label || profileData.role || '学领航员',
-            gender: profileData.gender,
+            gender: profileData.gender || '',
             grade: profileData.grade || '高二',
-            phone: profileData.phone || '138****8888',
-            email: profileData.email || 'sarah.mom@example.com',
-            wechat: profileData.wechat || 'sarah_mom_88',
-            city: profileData.city || '上海市',
-            district: profileData.district || '浦东新区',
-            address: profileData.address || '世纪大道 100 号',
-            avatarUrl: profileData.avatarUrl || profileData.avatar_url || DEFAULT_PROFILE.avatarUrl
+            phone: profileData.phone || '',
+            email: profileData.email || '',
+            wechat: profileData.wechat || '',
+            city: profileData.city || '',
+            district: profileData.district || '',
+            address: profileData.address || '',
+            avatarUrl: profileData.avatar_url || profileData.avatarUrl || DEFAULT_PROFILE.avatarUrl
           });
         }
 
-        const messagesData = await api.message.getAll(DEMO_USER_ID);
         if (messagesData && messagesData.length > 0) {
           setMessages(messagesData.map((m: any) => ({
             ...m,
@@ -152,21 +152,20 @@ export default function App() {
         } else {
           setMessages([{
             id: '1',
-            title: '欢迎来到 Digital Atheneum',
-            content: '感谢您注册我们的平台。在这里，您可以找到最顶尖的学府导师。',
+            title: '欢迎来到墨金学术',
+            content: '感谢您注册我们的平台。',
             timestamp: new Date().toISOString(),
             isRead: false,
             type: 'system'
           }]);
         }
 
-        const requirementsData = await api.requirement.getAll(DEMO_USER_ID);
         if (requirementsData && requirementsData.length > 0) {
           const latest = requirementsData[0];
           setPublishedRequirement({
             id: latest.id,
             grade: latest.grade,
-            subjects: latest.subjects,
+            subjects: latest.subjects || [],
             gender: latest.gender,
             schoolBg: latest.school_bg,
             timeSlot: latest.time_slot,
@@ -176,20 +175,11 @@ export default function App() {
           });
         }
 
-        const enrollmentsData = await api.enrollment.getAll(DEMO_USER_ID);
         if (enrollmentsData) {
           setEnrolledCourses(enrollmentsData.map((e: any) => e.course_id));
         }
       } catch (error) {
-        console.warn('Failed to load data from API, using defaults:', error);
-        setMessages([{
-          id: '1',
-          title: '欢迎来到 Digital Atheneum',
-          content: '感谢您注册我们的平台。在这里，您可以找到最顶尖的学府导师。',
-          timestamp: new Date().toISOString(),
-          isRead: false,
-          type: 'system'
-        }]);
+        console.warn('Failed to load data from API:', error);
       } finally {
         setIsLoading(false);
       }
