@@ -76,7 +76,12 @@ export default function App() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth timeout')), 5000)
+        );
+        const sessionPromise = supabase.auth.getSession();
+        const result = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any } };
+        const { data: { session } } = result;
         if (session?.user) {
           setIsAuthenticated(true);
           const { data: profileData } = await supabase
