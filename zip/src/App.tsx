@@ -79,6 +79,7 @@ export default function App() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           setIsAuthenticated(true);
+          setIsLoading(false);
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
