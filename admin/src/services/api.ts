@@ -44,20 +44,37 @@ async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers
-  });
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
 
-  if (response.status === 204) return null;
+    if (response.status === 204) return null;
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.error || `API Error: ${response.status}`);
+    if (!response.ok) {
+      console.error(`API Error [${response.status}]:`, data);
+      throw new Error(data.error || `API Error: ${response.status}`);
+    }
+
+    return data;
+  } catch (error: any) {
+    // 网络错误诊断
+    console.error(`API 请求失败 - URL: ${url}`);
+    console.error(`详细错误: ${error.message}`);
+    console.error(`环境变量 VITE_API_URL: ${import.meta.env.VITE_API_URL}`);
+    console.error(`最终 API_BASE_URL: ${API_BASE_URL}`);
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`网络错误：无法连接到 ${url}。请检查后端服务是否正在运行。`);
+    }
+    
+    throw error;
   }
-
-  return data;
 }
 
 export interface User {

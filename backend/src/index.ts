@@ -15,7 +15,29 @@ import adminRoutes from './routes/admin.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// CORS 配置：允许所有来源（开发和生产通用）
+const allowedOrigins = [
+  'http://localhost:3002',
+  'http://localhost:3000',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL, // 从环境变量读取前端URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // 允许同源请求和列表中的来源
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'apikey']
+}));
+
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
