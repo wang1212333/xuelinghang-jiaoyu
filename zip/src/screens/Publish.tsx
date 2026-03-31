@@ -200,7 +200,7 @@ export function Publish({ addMessage, requirement, setRequirement }: PublishProp
                       : 'bg-surface-container-low border-outline-variant hover:bg-surface-container-high text-on-surface'
                   }`}
                 >
-                  <Calendar className={timeSlot === '周末全天' ? 'text-primary' : 'text-tertiary'} w-5 h-5 />
+                  <Calendar className={`${timeSlot === '周末全天' ? 'text-primary' : 'text-tertiary'} w-5 h-5`} />
                   <span className={`text-sm ${timeSlot === '周末全天' ? 'font-medium' : ''}`}>周末全天</span>
                 </div>
                 <div 
@@ -211,7 +211,7 @@ export function Publish({ addMessage, requirement, setRequirement }: PublishProp
                       : 'bg-surface-container-low border-outline-variant hover:bg-surface-container-high text-on-surface'
                   }`}
                 >
-                  <Moon className={timeSlot === '平时晚上' ? 'text-primary' : 'text-tertiary'} w-5 h-5 />
+                  <Moon className={`${timeSlot === '平时晚上' ? 'text-primary' : 'text-tertiary'} w-5 h-5`} />
                   <span className={`text-sm ${timeSlot === '平时晚上' ? 'font-medium' : ''}`}>平时晚上</span>
                 </div>
               </div>
